@@ -1,0 +1,44 @@
+{
+  "name": "gitguru",
+  "version": "1.0.0",
+  "description": "Two Claude Code skills: /explain-diff analyzes git diffs and PRs with risk scoring, /repo-onboard generates architecture docs and Mermaid flow diagrams for new developers.",
+  "author": "NabeelShaikh08",
+  "repository": "https://github.com/NabeelShaikh08/gitguru",
+  "license": "MIT",
+  "skills": [
+    {
+      "name": "explain-diff",
+      "description": "Analyzes git diffs and GitHub PRs — plain English summary, risk level (Low/Medium/High), what could break, and specific test cases to write.",
+      "path": ".claude/skills/explain-diff/SKILL.md",
+      "usage": [
+        "/explain-diff",
+        "/explain-diff <pr-number>",
+        "/explain-diff <branch-name>"
+      ],
+      "requires": {
+        "gh": "optional — needed for PR number support"
+      }
+    },
+    {
+      "name": "repo-onboard",
+      "description": "Generates ARCHITECTURE.md, FLOW.md (with Mermaid diagrams), QUICKSTART.md, and KEY_FILES.md to help new developers understand any codebase.",
+      "path": ".claude/skills/repo-onboard/SKILL.md",
+      "usage": [
+        "/repo-onboard"
+      ],
+      "generates": [
+        "ARCHITECTURE.md",
+        "FLOW.md",
+        "QUICKSTART.md",
+        "KEY_FILES.md"
+      ]
+    }
+  ],
+  "extras": {
+    "watch-mode": {
+      "description": "Chokidar-based file watcher that auto-runs /explain-diff every time you save a file.",
+      "path": "watch/",
+      "setup": "cd watch && npm install && node watch.js"
+    }
+  }
+}

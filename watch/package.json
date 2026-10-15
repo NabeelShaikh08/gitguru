@@ -1,0 +1,20 @@
+{
+  "name": "gitguru-watch",
+  "version": "1.0.0",
+  "description": "Chokidar-based watch mode for GitGuru — auto-runs /explain-diff on file save",
+  "main": "watch.js",
+  "bin": {
+    "gitguru-watch": "./watch.js"
+  },
+  "scripts": {
+    "start": "node watch.js",
+    "watch": "node watch.js"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}
