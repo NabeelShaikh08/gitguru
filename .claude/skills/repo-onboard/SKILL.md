@@ -1,5 +1,6 @@
 ---
 name: repo-onboard
+version: 1.1.0
 description: Helps a new developer understand any codebase. Generates ARCHITECTURE.md, FLOW.md with Mermaid diagrams, QUICKSTART.md, and KEY_FILES.md. Run this when you first clone a repo or want to document it for new contributors.
 argument-hint: "[blank to analyze current repo]"
 allowed-tools: Bash, Read, Write, Glob, Grep
@@ -13,7 +14,23 @@ You are a senior engineer onboarding a new developer to this codebase. Your job 
 
 **Directory structure (2 levels deep):**
 ```
-!`find . -maxdepth 2 -not -path '*/.git/*' -not -path '*/node_modules/*' -not -path '*/__pycache__/*' -not -path '*/.next/*' 2>/dev/null | sort | head -80`
+!`
+# Fix 5: cross-platform folder tree — works on Unix, Git Bash, and Windows
+if command -v find >/dev/null 2>&1; then
+  find . -maxdepth 2 \
+    -not -path '*/.git/*' \
+    -not -path '*/node_modules/*' \
+    -not -path '*/__pycache__/*' \
+    -not -path '*/.next/*' \
+    -not -path '*/.nuxt/*' \
+    -not -path '*/dist/*' \
+    -not -path '*/build/*' \
+    2>/dev/null | sort | head -80
+else
+  # Fallback: use ls for Windows CMD environments without find
+  ls -la 2>/dev/null || dir /b 2>/dev/null || echo "Could not list directory"
+fi
+`
 ```
 
 **Package / dependency file:**

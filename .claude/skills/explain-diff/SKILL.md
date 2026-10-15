@@ -1,5 +1,6 @@
 ---
 name: explain-diff
+version: 1.1.0
 description: Analyzes a git diff or GitHub PR — explains what changed in plain English, rates risk level, flags what could break, and suggests specific test cases. Use when you want to understand a diff before committing or reviewing a PR.
 argument-hint: "[pr-number | branch-name | blank for staged]"
 allowed-tools: Bash
@@ -66,20 +67,19 @@ Reason: one sentence explaining exactly why this risk level.
 ---
 
 ### What Could Break
-Specific things that might regress. Be concrete — name the function, file, or user flow at risk. If nothing obvious, say so.
-
-- 
-- 
+Specific things that might regress. Be concrete — name the actual function, file, or user flow at risk.
+If genuinely nothing is at risk, write exactly: "No obvious regressions — change is isolated."
+Never leave this section empty or with placeholder bullets.
 
 ---
 
 ### Suggested Test Cases
-Exact test cases to write or run. Not generic ("add a unit test") — specific ("test that `getUserById` returns null when user is deleted, not throws").
-
-- [ ] 
-- [ ] 
+Exact test cases to write or run. Be specific — not "add a unit test" but the exact scenario.
+If this is docs/config only with nothing to test, write exactly: "No test cases needed — non-functional change."
+Never leave this section empty or with placeholder checkboxes.
 
 ---
 
 ### Reviewer Notes
-Any patterns, anti-patterns, or things worth a second look. Skip if nothing notable.
+Patterns, anti-patterns, security concerns, or anything worth a second look.
+If nothing notable, write exactly: "Nothing notable."

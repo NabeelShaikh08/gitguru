@@ -12,7 +12,7 @@
  */
 
 const chokidar = require('chokidar')
-const { execSync } = require('child_process')
+const { execSync, spawn } = require('child_process')
 const path = require('path')
 const os = require('os')
 
@@ -35,6 +35,84 @@ const IGNORED = [
 
 let debounceTimer = null
 let lastFile = null
+let claudeRunning = false
+
+function getDiff(filePath) {
+  try {
+    // Try committed vs working tree first
+    let diff = execSync('git diff HEAD -- ' + JSON.stringify(filePath), {
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim()
+
+    // Fix 2: fallback for new/untracked files — try unstaged diff
+    if (!diff) {
+      diff = execSync('git diff -- ' + JSON.stringify(filePath), {
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }).trim()
+    }
+
+    // Fix 2: fallback for staged new files
+    if (!diff) {
+      diff = execSync('git diff --staged -- ' + JSON.stringify(filePath), {
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }).trim()
+    }
+
+    return diff
+  } catch {
+    return ''
+  }
+}
+
+function runExplainDiff(filePath) {
+  // Fix 1: skip if claude is already running — don't queue up multiple runs
+  if (claudeRunning) {
+    console.log('[gitguru] Skipping — analysis already running...')
+    return
+  }
+
+  const rel = path.relative(process.cwd(), filePath)
+  console.log(`\n[gitguru] File changed: ${rel}`)
+
+  const diff = getDiff(filePath)
+
+  if (!diff) {
+    console.log('[gitguru] No diff detected (file may not be tracked by git yet — run git add first)')
+    return
+  }
+
+  console.log('[gitguru] Running explain-diff...\n')
+  console.log('─'.repeat(60))
+
+  claudeRunning = true
+
+  // Fix 1: use spawn (async, non-blocking) instead of execSync
+  // This keeps the watcher alive and responsive while Claude runs
+  const claude = spawn('claude', ['-p', '/explain-diff'], {
+    stdio: 'inherit',
+    shell: true,
+  })
+
+  claude.on('error', (err) => {
+    if (err.code === 'ENOENT') {
+      console.error('[gitguru] Error: claude CLI not found. Make sure Claude Code is installed.')
+    } else {
+      console.error('[gitguru] Error running explain-diff:', err.message)
+    }
+    claudeRunning = false
+  })
+
+  claude.on('close', (code) => {
+    console.log('─'.repeat(60))
+    if (code !== 0 && code !== null) {
+      console.log(`[gitguru] explain-diff exited with code ${code}`)
+    }
+    claudeRunning = false
+  })
+}
 
 const watcher = chokidar.watch(watchPath, {
   ignored: IGNORED,
@@ -45,39 +123,6 @@ const watcher = chokidar.watch(watchPath, {
     pollInterval: 100,
   },
 })
-
-function runExplainDiff(filePath) {
-  const rel = path.relative(process.cwd(), filePath)
-  console.log(`\n[gitguru] File changed: ${rel}`)
-  console.log('[gitguru] Running explain-diff...\n')
-  console.log('─'.repeat(60))
-
-  try {
-    const result = execSync('git diff HEAD -- ' + JSON.stringify(filePath), {
-      encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    })
-
-    if (!result.trim()) {
-      console.log('[gitguru] No diff detected (file may not be tracked by git yet)')
-      return
-    }
-
-    // Run claude with the explain-diff skill non-interactively
-    execSync(`claude -p "/explain-diff" --no-interactive 2>&1`, {
-      encoding: 'utf8',
-      stdio: 'inherit',
-    })
-  } catch (err) {
-    if (err.message.includes('claude: command not found')) {
-      console.error('[gitguru] Error: claude CLI not found. Make sure Claude Code is installed.')
-    } else {
-      console.error('[gitguru] Error running explain-diff:', err.message)
-    }
-  }
-
-  console.log('─'.repeat(60))
-}
 
 watcher
   .on('change', (filePath) => {
