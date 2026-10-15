@@ -14,9 +14,10 @@
 const chokidar = require('chokidar')
 const { execSync } = require('child_process')
 const path = require('path')
+const os = require('os')
 
 const args = process.argv.slice(2)
-const watchPath = args.find(a => !a.startsWith('--')) || '.'
+const watchPath = path.resolve(args.find(a => !a.startsWith('--')) || '.')
 const debounceArg = args.find(a => a.startsWith('--debounce='))
 const debounceMs = debounceArg ? parseInt(debounceArg.split('=')[1]) : 600
 
